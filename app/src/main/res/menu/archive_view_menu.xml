@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item android:title="New archive"
+        android:id="@+id/actNewArchive"
+        app:showAsAction="never"></item>
+    <item android:title="Load archive"
+        android:id="@+id/actLoadArchive"
+        app:showAsAction="never"></item>
+    <item android:title="Add file"
+        android:id="@+id/actAddFile"
+        app:showAsAction="ifRoom"
+        android:icon="@drawable/ic_add_file"></item>
+    <item android:title="Extract"
+        android:id="@+id/actExtract"
+        app:showAsAction="ifRoom"
+        android:icon="@drawable/ic_extract"></item>
+</menu>

@@ -3,7 +3,9 @@ package com.example.turbokompresor1999;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 
 public class ProcessingPreparationActivity extends AppCompatActivity {
 
@@ -18,5 +20,10 @@ public class ProcessingPreparationActivity extends AppCompatActivity {
         actionBar.setDisplayHomeAsUpEnabled(true);
 
         setContentView(R.layout.activity_processing_settings);
+    }
+
+    public void doProcessing(View v)
+    {
+        startActivity(new Intent(this, ProcessingActivity.class));
     }
 }

@@ -22,6 +22,9 @@ public class ArchiveViewActivity extends AppCompatActivity {
         actionBar.setDisplayUseLogoEnabled(true);
         actionBar.setDisplayShowHomeEnabled(true);
 
+        ArchiveManager archiveManager = new ArchiveManager();
+
+
         setContentView(R.layout.activity_main);
     }
 

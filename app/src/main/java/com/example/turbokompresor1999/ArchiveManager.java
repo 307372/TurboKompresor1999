@@ -1,11 +1,18 @@
 package com.example.turbokompresor1999;
 
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+
 public class ArchiveManager {
     private static ArchiveManager instance;
-    Folder root_folder;
+    Archive archive;
+    ArrayList<WeakReference<ArchiveStructure>> contentOfCurrentFolder;
+    WeakReference<Folder> currentFolder;
 
     private ArchiveManager() {
-        root_folder = new Folder();
+        archive = new Archive();
+        contentOfCurrentFolder = new ArrayList<>();
+        currentFolder = new WeakReference<>(archive.root_folder);
     }
 
     public static ArchiveManager getInstance() {
@@ -15,12 +22,39 @@ public class ArchiveManager {
         return instance;
     }
 
+    public void updateContentOfCurrentFolder() {
+        contentOfCurrentFolder = currentFolder.get().getContent();
+    }
+
+    public ArrayList<WeakReference<ArchiveStructure>> getContentOfCurrentFolder()
+    {
+        return contentOfCurrentFolder;
+    }
+
     public void pushArchiveToCpp() {
 
     }
 
-    public void pullArchiveFromCpp() {
+    public ArchiveStructure getStructureFromCurrentContent(long id) {
+        for (WeakReference<ArchiveStructure> ptr : contentOfCurrentFolder){
+            ArchiveStructure curr = ptr.get();
+            if (curr != null) {
+                if (curr.lookup_id == id) {
+                    return curr;
+                }
+            }
+        }
+        return null;
+    }
 
+    public void pullArchiveFromCpp() {
+        archive.pullAllFromArchive();
+        currentFolder = new WeakReference<>(archive.root_folder);
+    }
+
+    public void changeCurrentFolder(Folder folder){
+        currentFolder = new WeakReference<>(folder);
+        updateContentOfCurrentFolder();
     }
 
 }

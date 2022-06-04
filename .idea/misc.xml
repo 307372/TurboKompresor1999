@@ -3,10 +3,14 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/PC/AndroidStudioProjects/TurboKompresor1999/app/src/main/res/layout/activity_archive_structure_details.xml" value="0.5364995602462621" />
         <entry key="..\:/Users/PC/AndroidStudioProjects/TurboKompresor1999/app/src/main/res/layout/activity_main.xml" value="0.42857142857142855" />
         <entry key="..\:/Users/PC/AndroidStudioProjects/TurboKompresor1999/app/src/main/res/layout/activity_processing.xml" value="0.3828571428571429" />
         <entry key="..\:/Users/PC/AndroidStudioProjects/TurboKompresor1999/app/src/main/res/layout/activity_processing_settings.xml" value="0.5546875" />
-        <entry key="..\:/Users/PC/AndroidStudioProjects/TurboKompresor1999/app/src/main/res/menu/archive_view_menu.xml" value="0.5546875" />
+        <entry key="..\:/Users/PC/AndroidStudioProjects/TurboKompresor1999/app/src/main/res/layout/file_view_layout.xml" value="0.2857142857142857" />
+        <entry key="..\:/Users/PC/AndroidStudioProjects/TurboKompresor1999/app/src/main/res/menu/archive_view_menu.xml" value="0.3706293706293706" />
+        <entry key="..\:/Users/PC/AndroidStudioProjects/TurboKompresor1999/app/src/main/res/mipmap-anydpi-v26/ic_file.xml" value="0.1055" />
+        <entry key="..\:/Users/PC/AndroidStudioProjects/TurboKompresor1999/app/src/main/res/mipmap-anydpi-v26/ic_tk1999_launcher.xml" value="0.1185" />
       </map>
     </option>
   </component>

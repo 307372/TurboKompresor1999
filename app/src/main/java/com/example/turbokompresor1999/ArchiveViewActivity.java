@@ -6,6 +6,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.content.Context;
@@ -15,8 +17,25 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import java.util.Optional;
+import java.util.UUID;
+
+class Codes {
+
+    static class Request {
+        static final int details = 1234;
+        static final int newCrime = 4321;
+    }
+
+    static class Result {
+        static final int noActionRequired = 999;
+        static final int crimeAdded = 1000;
+        static final int crimeDeletion = 1001;
+        static final int crimeModification = 1002;
+    }
+}
 
 public class ArchiveViewActivity extends AppCompatActivity {
 
@@ -58,14 +77,19 @@ public class ArchiveViewActivity extends AppCompatActivity {
         }
     }
 
+    RecyclerView recyclerView;
+    ArchiveManager manager;
+    ArchiveAdapter archiveAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
         ActionBar actionBar = getSupportActionBar();
         actionBar.setTitle("No archive selected!");
         actionBar.setSubtitle("Load or create new archive to start");
-        actionBar.setIcon(R.drawable.ic_extract);   // TODO: tk2k icon goes here
+        actionBar.setIcon(R.mipmap.ic_archive_toolbar);   // TODO: tk2k icon goes here
         actionBar.setDisplayUseLogoEnabled(true);
         actionBar.setDisplayShowHomeEnabled(true);
 
@@ -73,14 +97,21 @@ public class ArchiveViewActivity extends AppCompatActivity {
         System.out.println(stringFromJNI());
         //*
         //ArchiveManager archiveManager = ArchiveManager.getInstance();
-        Archive archive = new Archive();
-        archive.pullFromArchiveRecursive();
-        System.out.println(archive.root_folder.recursive_string());//*/
+        manager = ArchiveManager.getInstance();
+        manager.pullArchiveFromCpp();
+
+        System.out.println(manager.archive.root_folder.recursive_string());//*/
         /*Folder f = new Folder();
         f.child_file = Optional.of(new File());
         System.out.println(f.recursive_string());*/
 
-        setContentView(R.layout.activity_main);
+        recyclerView = findViewById(R.id.rv_archiveRecyclerView);
+        manager.updateContentOfCurrentFolder();
+        archiveAdapter = new ArchiveAdapter(this, manager);
+
+        recyclerView.setAdapter(archiveAdapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
     }
 
     @Override
@@ -108,6 +139,30 @@ public class ArchiveViewActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    public void onItemClicked(View itemView) {
+        ArchiveStructure structure = ((ArchiveStructureView)itemView.getParent()).getData().get();
+
+        if (structure instanceof File) {
+            showDetails(itemView);
+        } else if (structure instanceof Folder) {
+            archiveAdapter.descend((Folder) structure);
+        }
+    }
+
+
+    public void showDetails(View itemView) {
+        long id = ((ArchiveStructureView)itemView.getParent()).getData().get().lookup_id;
+        Intent detailsActivityIntent = new Intent(this, ArchiveStructureDetailsActivity.class);
+        detailsActivityIntent.putExtra("lookup_id", id);
+        detailsActivityIntent.putExtra("requestCode", Codes.Request.details);
+
+        startActivityForResult(detailsActivityIntent, Codes.Request.details);
+    }
+
     private native String stringFromJNI();
 
+    @Override
+    public void onBackPressed() {
+        archiveAdapter.ascend();
+    }
 }

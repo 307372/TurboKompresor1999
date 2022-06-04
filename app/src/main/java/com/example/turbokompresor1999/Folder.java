@@ -2,15 +2,13 @@ package com.example.turbokompresor1999;
 
 import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 
-public class Folder {
-    public String name = null;                             // folder's name
-    public Long lookup_id = null;
-    public String path = null;                            // extraction path
+public class Folder extends ArchiveStructure {
+    // path = extraction path
     public Folder child_dir = null;                     // ptr to first subfolder in memory
     public Folder sibling_dir = null;                   // ptr to next sibling folder in memory
     public File child_file = null;                      // ptr to first file in memory
-    public WeakReference<Folder> parent = new WeakReference<>(null);// ptr to parent folder in memory
 
     Folder(){}
     Folder(byte[] name,
@@ -26,6 +24,28 @@ public class Folder {
         this.child_dir = child_dir;
         this.sibling_dir = sibling_dir;
         this.child_file = child_file;
+    }
+
+    public boolean isEmpty() {
+        return child_file == null && child_dir == null;
+    }
+
+    public ArrayList<WeakReference<ArchiveStructure>> getContent() {
+        ArrayList<WeakReference<ArchiveStructure>> content = new ArrayList<>();
+
+        Folder nextSibling = child_dir; // child dir goes inside current folder
+        while(nextSibling != null) {
+            content.add(new WeakReference<>(nextSibling));
+            nextSibling = nextSibling.sibling_dir; // then we get all folders inside current folder
+        }
+
+        File nextFile = child_file;
+        while(nextFile != null) {
+            content.add(new WeakReference<>(nextFile));
+            nextFile = nextFile.sibling_file;
+        }
+
+        return content;
     }
 
     @Override public String toString() {

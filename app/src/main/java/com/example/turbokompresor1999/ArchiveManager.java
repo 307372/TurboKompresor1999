@@ -10,9 +10,14 @@ public class ArchiveManager {
     WeakReference<Folder> currentFolder;
 
     private ArchiveManager() {
-        archive = new Archive();
+        clear();
+    }
+
+    public void clear()
+    {
+        archive = null;
         contentOfCurrentFolder = new ArrayList<>();
-        currentFolder = new WeakReference<>(archive.root_folder);
+        currentFolder = new WeakReference<>(null);
     }
 
     public static ArchiveManager getInstance() {
@@ -22,8 +27,13 @@ public class ArchiveManager {
         return instance;
     }
 
+    public boolean isArchiveOpen() {
+        return archive != null;
+    }
+
     public void updateContentOfCurrentFolder() {
-        contentOfCurrentFolder = currentFolder.get().getContent();
+        if(currentFolder.get() != null)
+            contentOfCurrentFolder = currentFolder.get().getContent();
     }
 
     public ArrayList<WeakReference<ArchiveStructure>> getContentOfCurrentFolder()
@@ -48,8 +58,11 @@ public class ArchiveManager {
     }
 
     public void pullArchiveFromCpp() {
+        archive = new Archive();
+        contentOfCurrentFolder = new ArrayList<>();
         archive.pullAllFromArchive();
         currentFolder = new WeakReference<>(archive.root_folder);
+        updateContentOfCurrentFolder();
     }
 
     public void changeCurrentFolder(Folder folder){

@@ -18,15 +18,17 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
-import java.util.Optional;
-import java.util.UUID;
+import com.nbsp.materialfilepicker.MaterialFilePicker;
+import com.nbsp.materialfilepicker.ui.FilePickerActivity;
 
 class Codes {
 
     static class Request {
         static final int details = 1234;
         static final int newCrime = 4321;
+        static final int FILE_PICKER_REQUEST_CODE=1337;
     }
 
     static class Result {
@@ -51,7 +53,6 @@ public class ArchiveViewActivity extends AppCompatActivity {
                 (res == PackageManager.PERMISSION_GRANTED ? "GRANTED" : "DENIED"));
 
         return res == PackageManager.PERMISSION_GRANTED;
-
     }
 
     public static boolean hasPermissions(Context context, String... permissions) {
@@ -80,38 +81,59 @@ public class ArchiveViewActivity extends AppCompatActivity {
     RecyclerView recyclerView;
     ArchiveManager manager;
     ArchiveAdapter archiveAdapter;
+    MaterialFilePicker picker;
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == Codes.Request.FILE_PICKER_REQUEST_CODE && resultCode == RESULT_OK) {
+            String filePath = data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH);
+            startFileProcessingPreparationActivity(filePath);
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        recyclerView = findViewById(R.id.rv_archiveRecyclerView);
+
         ActionBar actionBar = getSupportActionBar();
-        actionBar.setTitle("No archive selected!");
-        actionBar.setSubtitle("Load or create new archive to start");
-        actionBar.setIcon(R.mipmap.ic_archive_toolbar);   // TODO: tk2k icon goes here
+        actionBar.setIcon(R.mipmap.ic_archive_toolbar);
         actionBar.setDisplayUseLogoEnabled(true);
         actionBar.setDisplayShowHomeEnabled(true);
 
         checkPermissions();
+        manager = ArchiveManager.getInstance();
         System.out.println(stringFromJNI());
         //*
         //ArchiveManager archiveManager = ArchiveManager.getInstance();
-        manager = ArchiveManager.getInstance();
         manager.pullArchiveFromCpp();
 
-        System.out.println(manager.archive.root_folder.recursive_string());//*/
+        //System.out.println(manager.archive.root_folder.recursive_string());//*/
         /*Folder f = new Folder();
         f.child_file = Optional.of(new File());
         System.out.println(f.recursive_string());*/
 
-        recyclerView = findViewById(R.id.rv_archiveRecyclerView);
-        manager.updateContentOfCurrentFolder();
         archiveAdapter = new ArchiveAdapter(this, manager);
 
         recyclerView.setAdapter(archiveAdapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        updateActionBarText();
+    }
 
+    public void updateActionBarText() {
+        ActionBar actionBar = getSupportActionBar();
+        if (manager.isArchiveOpen()) {
+            actionBar.setTitle(manager.archive.root_folder.name);
+
+            actionBar.setSubtitle(manager.archive.load_path != null ? manager.archive.load_path.toString() : "");
+        } else {
+            actionBar.setTitle("No archive selected!");
+            actionBar.setSubtitle("Load or create new archive to start");
+        }
     }
 
     @Override
@@ -126,7 +148,8 @@ public class ArchiveViewActivity extends AppCompatActivity {
 
         switch (item.getItemId()) {
             case R.id.actAddFile:
-                startActivity(new Intent(ArchiveViewActivity.this, ProcessingPreparationActivity.class));
+                //launchFilePicker();
+
                 break;
             case R.id.actExtract:
                 break;
@@ -149,6 +172,18 @@ public class ArchiveViewActivity extends AppCompatActivity {
         }
     }
 
+    public void launchFilePicker(View v) {
+        picker = new MaterialFilePicker();
+        picker.withActivity(this)
+                .withCloseMenu(true)
+                .withRootPath("/")
+                .withPath("/storage")//String.valueOf(FileSystems.getDefault().getPath("/")))
+                .withHiddenFiles(true)
+                .withTitle("Select a file to add it")
+                .withRequestCode(Codes.Request.FILE_PICKER_REQUEST_CODE)
+                .start();
+    }
+
 
     public void showDetails(View itemView) {
         long id = ((ArchiveStructureView)itemView.getParent()).getData().get().lookup_id;
@@ -157,6 +192,13 @@ public class ArchiveViewActivity extends AppCompatActivity {
         detailsActivityIntent.putExtra("requestCode", Codes.Request.details);
 
         startActivityForResult(detailsActivityIntent, Codes.Request.details);
+    }
+
+    public void startFileProcessingPreparationActivity(String pathToFile) {
+        Intent intent = new Intent(ArchiveViewActivity.this, ProcessingPreparationActivity.class);
+        intent.putExtra("pathToFile", pathToFile);
+
+        startActivity(intent);
     }
 
     private native String stringFromJNI();

@@ -6,7 +6,7 @@ import java.util.BitSet;
 
 public class File extends ArchiveStructure {
     public static class Flags {
-        public static final int BTW=0;
+        public static final int BWT =0;
         public static final int MTF=1;
         public static final int RLE=2;
         public static final int AC_order0=3;

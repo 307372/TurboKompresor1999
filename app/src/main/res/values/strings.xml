@@ -1,3 +1,16 @@
 <resources>
     <string name="app_name">TurboKompresor1999</string>
+    <string-array name="entropy_codings">
+        <item>None</item>
+        <item>Arithmetic coding (faster)</item>
+        <item>Arithmetic coding (Slower, best compression)</item>
+        <item>Asymmetric Numeral Systems (fastest)</item>
+    </string-array>
+
+    <string-array name="hash_algorithms">
+        <item>None</item>
+        <item>CRC-32</item>
+        <item>SHA-1</item>
+        <item>SHA-256</item>
+    </string-array>
 </resources>

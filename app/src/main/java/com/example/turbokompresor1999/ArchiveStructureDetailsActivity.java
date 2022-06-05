@@ -7,10 +7,8 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.Date;
 import java.util.Objects;
 
 public class ArchiveStructureDetailsActivity extends AppCompatActivity {
@@ -96,7 +94,7 @@ public class ArchiveStructureDetailsActivity extends AppCompatActivity {
                 + "Applied algorithms:\n";
 
         ArrayList<String> algorithms = new ArrayList<>();
-        if (flags.get(File.Flags.BTW)) algorithms.add("Burrows-Wheeler transform\n");
+        if (flags.get(File.Flags.BWT)) algorithms.add("Burrows-Wheeler transform\n");
         if (flags.get(File.Flags.MTF)) algorithms.add("Move-To-Front\n");
         if (flags.get(File.Flags.RLE)) algorithms.add("Run-length encoding\n");
         if (flags.get(File.Flags.AC_order0)) algorithms.add("Arithmetic coding (simple model)\n");

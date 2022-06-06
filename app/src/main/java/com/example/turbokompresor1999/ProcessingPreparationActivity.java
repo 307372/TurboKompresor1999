@@ -12,6 +12,8 @@ import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.Spinner;
 
+import com.nbsp.materialfilepicker.ui.FilePickerActivity;
+
 import java.nio.ByteBuffer;
 import java.util.BitSet;
 
@@ -20,13 +22,23 @@ public class ProcessingPreparationActivity extends AppCompatActivity {
     CheckBox cb_bwt;
     CheckBox cb_mtf;
     CheckBox cb_rle;
-
     Spinner spinnerEntropyCoding;
     Spinner spinnerHashing;
 
     String path;
     long filesize;
+    int requestCode;
+    boolean success = false;
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == Codes.Request.addFile)
+            setResult(resultCode, data);
+
+        finish();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,20 +46,29 @@ public class ProcessingPreparationActivity extends AppCompatActivity {
         setContentView(R.layout.activity_processing_settings);
 
         Bundle extras = getIntent().getExtras();
+        requestCode = extras.getInt("requestCode");
+
         path = extras.getString("pathToFile");
         java.io.File file = new java.io.File(path);
         filesize = file.length();
 
-        ActionBar actionBar = getSupportActionBar();
-        actionBar.setTitle("Compression");
-        actionBar.setSubtitle(file.getName());
-        actionBar.setDisplayShowHomeEnabled(true);
-        actionBar.setDisplayHomeAsUpEnabled(true);
+        configureActionBar(file.getName());
+        configureSpinners();
 
         cb_bwt = findViewById(R.id.checkBWT);
         cb_mtf = findViewById(R.id.checkMTF);
         cb_rle = findViewById(R.id.checkRLE);
+    }
 
+    public void configureActionBar(String subtitle) {
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setTitle("Compression");
+        actionBar.setSubtitle(subtitle);
+        actionBar.setDisplayShowHomeEnabled(true);
+        actionBar.setDisplayHomeAsUpEnabled(true);
+    }
+
+    public void configureSpinners() {
         spinnerEntropyCoding = findViewById(R.id.spinnerEntropySelector);
         ArrayAdapter<CharSequence> entropyAdapter = ArrayAdapter.createFromResource(this, R.array.entropy_codings, android.R.layout.simple_spinner_item);
         entropyAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -137,6 +158,6 @@ public class ProcessingPreparationActivity extends AppCompatActivity {
         intent.putExtra("amountOfBlocks", getAmountOfBlocks(flags));
         intent.putExtra("partialProgressFor100Percent", getHowMuchProgressIs100Percent(flags));
 
-        startActivity(intent);
+        startActivityForResult(intent, Codes.Request.addFile);
     }
 }

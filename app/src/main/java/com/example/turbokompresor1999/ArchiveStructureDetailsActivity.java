@@ -27,16 +27,10 @@ public class ArchiveStructureDetailsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_archive_structure_details);
+        findViewsById();
+
         Bundle extras = getIntent().getExtras();
         requestCode = extras.getInt("requestCode");
-
-        tvFilename = findViewById(R.id.tv_filename);
-        tvPath = findViewById(R.id.tv_path);
-        tvCompressedSize = findViewById(R.id.tv_compressed_size);
-        tvOriginalSize = findViewById(R.id.tv_original_size);
-        tvCompressionRatio = findViewById(R.id.tv_compression_ratio);
-        tvAppliedAlgorithms = findViewById(R.id.tv_applied_algorithms);
-
         if (requestCode == Codes.Request.details) {
             long id = extras.getLong("lookup_id");
 
@@ -54,6 +48,15 @@ public class ArchiveStructureDetailsActivity extends AppCompatActivity {
             data.setSolved(false);
         }*/
         updateViews();
+    }
+
+    public void findViewsById() {
+        tvFilename = findViewById(R.id.tv_filename);
+        tvPath = findViewById(R.id.tv_path);
+        tvCompressedSize = findViewById(R.id.tv_compressed_size);
+        tvOriginalSize = findViewById(R.id.tv_original_size);
+        tvCompressionRatio = findViewById(R.id.tv_compression_ratio);
+        tvAppliedAlgorithms = findViewById(R.id.tv_applied_algorithms);
     }
 
     @Override

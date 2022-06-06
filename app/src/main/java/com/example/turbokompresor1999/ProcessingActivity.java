@@ -4,7 +4,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -29,7 +28,7 @@ public class ProcessingActivity extends AppCompatActivity {
     TextView tvCurrentPhase;
     ProgressBar partialProgressBar;
     ProgressBar totalProgressBar;
-    Handler progressHandler;
+    Handler mainThreadHandler;
     Date startDate;
 
 
@@ -37,12 +36,7 @@ public class ProcessingActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_processing);
-
-        tvCurrentFileName = findViewById(R.id.tvCurrentFileName);
-        tvTimePassed = findViewById(R.id.tvTimePassed);
-        tvCurrentPhase = findViewById(R.id.tvCurrentPhase);
-        partialProgressBar = findViewById(R.id.partialProgressBar);
-        totalProgressBar = findViewById(R.id.totalProgressBar);
+        findViewsById();
 
         Bundle extras = getIntent().getExtras();
 
@@ -58,7 +52,7 @@ public class ProcessingActivity extends AppCompatActivity {
         partialProgressBar.setMax((int) maxPartialProgress);
         totalProgressBar.setMax(1);
 
-        progressHandler = new Handler();
+        mainThreadHandler = new Handler();
         startDate = Calendar.getInstance().getTime();
 
         worker = new ProcessingThread(path, parent_lookup_id, flags);
@@ -70,10 +64,22 @@ public class ProcessingActivity extends AppCompatActivity {
         updateCurrentPhase();
     }
 
+    void findViewsById() {
+        tvCurrentFileName = findViewById(R.id.tvCurrentFileName);
+        tvTimePassed = findViewById(R.id.tvTimePassed);
+        tvCurrentPhase = findViewById(R.id.tvCurrentPhase);
+        partialProgressBar = findViewById(R.id.partialProgressBar);
+        totalProgressBar = findViewById(R.id.totalProgressBar);
+    }
+
     void updateProgressBars(int partialProgress, int totalProgress) {
         partialProgressBar.setProgress(partialProgress);
         totalProgressBar.setProgress(totalProgress);
-        tvCurrentPhase.setText("partial=" + partialProgress + ", total=" + totalProgress);
+    }
+
+    public void setResult() {
+        if (success) setResult(Codes.Result.fileAdded);
+        else setResult(Codes.Result.failedToAdd);
     }
 
     private native int getProcessingProgress();
@@ -97,7 +103,7 @@ public class ProcessingActivity extends AppCompatActivity {
 
             success = compressFile(path, parent_lookup_id, flags);
             processingDone = true;
-            if (success) ArchiveManager.getInstance().pullArchiveFromCpp();
+            mainThreadHandler.post(ProcessingActivity.this::setResult);
         }
 
         private native boolean compressFile(String pathToFile, long parent_lookup_id, int flags);
@@ -115,12 +121,6 @@ public class ProcessingActivity extends AppCompatActivity {
                 Date dateMin = simpleDateFormat.parse("00:00:00:0");
                 difference = (dateMax.getTime() - startDate.getTime()) + (currentDate.getTime() - dateMin.getTime());
             }
-            int days = (int) (difference / (1000 * 60 * 60 * 24));
-            int hours = (int) ((difference - (1000 * 60 * 60 * 24 * days)) / (1000 * 60 * 60));
-            int min = (int) (difference - (1000 * 60 * 60 * 24 * days) - (1000 * 60 * 60 * hours)) / (1000 * 60);
-            int sec = (int) (difference - (1000 * 60 * 60 * 24 * days) - (1000 * 60 * 60 * hours) - (1000 * 60 * min)) / 1000;
-            int ms = (int) (difference - (1000 * 60 * 60 * 24 * days) - (1000 * 60 * 60 * hours) - (1000 * 60 * min) - 1000 * sec);
-
 
             tvTimePassed.setText(simpleDateFormat.format(new Date(difference)));
         } catch (Exception e){
@@ -149,14 +149,14 @@ public class ProcessingActivity extends AppCompatActivity {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                progressHandler.post(() -> updateProgressBars((int) combinedProgress / 100, (int) combinedProgress % 100));
-                progressHandler.post(ProcessingActivity.this::updateTimer);
+                mainThreadHandler.post(() -> updateProgressBars((int) combinedProgress / 100, (int) combinedProgress % 100));
+                mainThreadHandler.post(ProcessingActivity.this::updateTimer);
 
             }
-            progressHandler.post(() -> updateProgressBars((int) maxPartialProgress, 1));
-            progressHandler.post(ProcessingActivity.this::updateTimer);
-            progressHandler.post(ProcessingActivity.this::updateCurrentPhase);
-            progressHandler.post(() -> Toast.makeText(ProcessingActivity.this, "Finished", Toast.LENGTH_LONG).show());
+            mainThreadHandler.post(() -> updateProgressBars((int) maxPartialProgress, 1));
+            mainThreadHandler.post(ProcessingActivity.this::updateTimer);
+            mainThreadHandler.post(ProcessingActivity.this::updateCurrentPhase);
+            mainThreadHandler.post(() -> Toast.makeText(ProcessingActivity.this, "Finished", Toast.LENGTH_LONG).show());
         }
     }
 }

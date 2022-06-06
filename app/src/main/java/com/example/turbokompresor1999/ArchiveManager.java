@@ -57,7 +57,7 @@ public class ArchiveManager {
         return null;
     }
 
-    public void pullArchiveFromCpp() {
+    public void pullArchiveAndUpdate() {
         archive = new Archive();
         contentOfCurrentFolder = new ArrayList<>();
         archive.pullAllFromArchive();

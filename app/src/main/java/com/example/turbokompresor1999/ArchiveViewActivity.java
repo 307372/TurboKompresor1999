@@ -1,24 +1,18 @@
 package com.example.turbokompresor1999;
 
-import static android.content.ContentValues.TAG;
+import static com.example.turbokompresor1999.PermissionRequester.checkPermissions;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
 
 import com.nbsp.materialfilepicker.MaterialFilePicker;
 import com.nbsp.materialfilepicker.ui.FilePickerActivity;
@@ -26,12 +20,14 @@ import com.nbsp.materialfilepicker.ui.FilePickerActivity;
 class Codes {
 
     static class Request {
+        static final int addFile = 9999;
         static final int details = 1234;
         static final int newCrime = 4321;
-        static final int FILE_PICKER_REQUEST_CODE=1337;
+        static final int FILE_PICKER_REQUEST_CODE = 1337;
     }
-
     static class Result {
+        static final int fileAdded = 997;
+        static final int failedToAdd = 998;
         static final int noActionRequired = 999;
         static final int crimeAdded = 1000;
         static final int crimeDeletion = 1001;
@@ -45,38 +41,7 @@ public class ArchiveViewActivity extends AppCompatActivity {
         System.loadLibrary("jnitest");
     }
 
-    public static boolean hasPermission(Context context, String permission) {
 
-        int res = context.checkCallingOrSelfPermission(permission);
-
-        Log.v(TAG, "permission: " + permission + " = \t\t" +
-                (res == PackageManager.PERMISSION_GRANTED ? "GRANTED" : "DENIED"));
-
-        return res == PackageManager.PERMISSION_GRANTED;
-    }
-
-    public static boolean hasPermissions(Context context, String... permissions) {
-
-        boolean hasAllPermissions = true;
-
-        for(String permission : permissions) {
-            //you can return false instead of assigning, but by assigning you can log all permission values
-            if (! hasPermission(context, permission)) {hasAllPermissions = false; }
-        }
-
-        return hasAllPermissions;
-
-    }
-
-    private void checkPermissions() {
-
-        int permissionsCode = 42;
-        String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
-
-        if (!hasPermissions(this, permissions)) {
-            ActivityCompat.requestPermissions(this, permissions, permissionsCode);
-        }
-    }
 
     RecyclerView recyclerView;
     ArchiveManager manager;
@@ -87,9 +52,23 @@ public class ArchiveViewActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == Codes.Request.FILE_PICKER_REQUEST_CODE && resultCode == RESULT_OK) {
-            String filePath = data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH);
-            startFileProcessingPreparationActivity(filePath);
+        switch (requestCode)
+        {
+            case Codes.Request.FILE_PICKER_REQUEST_CODE:
+                if (resultCode == RESULT_OK)
+                {
+                    String filePath = data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH);
+                    startFileProcessingPreparationActivity(filePath);
+                }
+                break;
+
+            case Codes.Request.addFile:
+                if (resultCode == Codes.Result.fileAdded)
+                {
+                    manager.pullArchiveAndUpdate();
+                    archiveAdapter.notifyDataSetChanged(); //TODO: optimise this if needed
+                }
+                break;
         }
     }
 
@@ -105,12 +84,12 @@ public class ArchiveViewActivity extends AppCompatActivity {
         actionBar.setDisplayUseLogoEnabled(true);
         actionBar.setDisplayShowHomeEnabled(true);
 
-        checkPermissions();
+        checkPermissions(this);
         manager = ArchiveManager.getInstance();
 
         //load archive by hand
         System.out.println(stringFromJNI());
-        manager.pullArchiveFromCpp();
+        manager.pullArchiveAndUpdate();
 
 
         //*
@@ -202,7 +181,7 @@ public class ArchiveViewActivity extends AppCompatActivity {
         Intent intent = new Intent(ArchiveViewActivity.this, ProcessingPreparationActivity.class);
         intent.putExtra("pathToFile", pathToFile);
 
-        startActivity(intent);
+        startActivityForResult(intent, Codes.Request.addFile);
     }
 
     private native String stringFromJNI();

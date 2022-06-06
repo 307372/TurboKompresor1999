@@ -107,10 +107,14 @@ public class ArchiveViewActivity extends AppCompatActivity {
 
         checkPermissions();
         manager = ArchiveManager.getInstance();
+
+        //load archive by hand
         System.out.println(stringFromJNI());
+        manager.pullArchiveFromCpp();
+
+
         //*
         //ArchiveManager archiveManager = ArchiveManager.getInstance();
-        manager.pullArchiveFromCpp();
 
         //System.out.println(manager.archive.root_folder.recursive_string());//*/
         /*Folder f = new Folder();
@@ -176,7 +180,7 @@ public class ArchiveViewActivity extends AppCompatActivity {
         picker = new MaterialFilePicker();
         picker.withActivity(this)
                 .withCloseMenu(true)
-                .withRootPath("/")
+                .withRootPath("/storage")
                 .withPath("/storage")//String.valueOf(FileSystems.getDefault().getPath("/")))
                 .withHiddenFiles(true)
                 .withTitle("Select a file to add it")

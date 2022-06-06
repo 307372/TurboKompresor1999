@@ -90,7 +90,7 @@ public class ArchiveStructureDetailsActivity extends AppCompatActivity {
 
     private String getPipelineStringFromFlags(BitSet flags)
     {
-        String blockSizeStr = "File was compressed in blocks of up to " + getBlockSizeFromFlags(flags) + "\n\n"
+        String blockSizeStr = "File was compressed in blocks of up to " + getScaledBlockSizeFromFlags(flags) + "\n\n"
                 + "Applied algorithms:\n";
 
         ArrayList<String> algorithms = new ArrayList<>();
@@ -115,7 +115,7 @@ public class ArchiveStructureDetailsActivity extends AppCompatActivity {
         return blockSizeStr + String.join("↓\n", algorithms) + checksumUsed;
     }
 
-    private String getBlockSizeFromFlags(BitSet flags) {
+    public static String getScaledBlockSizeFromFlags(BitSet flags) {
         int block_size = 1 << 24;
         if(flags.get(File.Flags.BlockSizeDiv2)) block_size >>= 1;
         if(flags.get(File.Flags.BlockSizeDiv4)) block_size >>= 2;
@@ -123,6 +123,16 @@ public class ArchiveStructureDetailsActivity extends AppCompatActivity {
         if(flags.get(File.Flags.BlockSizeDiv256)) block_size >>= 8;
 
         return scaleBytesToBiggerUnit(block_size);
+    }
+
+    public static int getBlockSizeFromFlags(BitSet flags) {
+        int block_size = 1 << 24;
+        if(flags.get(File.Flags.BlockSizeDiv2)) block_size >>= 1;
+        if(flags.get(File.Flags.BlockSizeDiv4)) block_size >>= 2;
+        if(flags.get(File.Flags.BlockSizeDiv16)) block_size >>= 4;
+        if(flags.get(File.Flags.BlockSizeDiv256)) block_size >>= 8;
+
+        return block_size;
     }
 
     public static String scaleBytesToBiggerUnit(long bytes) {

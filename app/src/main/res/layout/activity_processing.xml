@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ProcessingActivity">
+    tools:context=".ProcessingActivity"
+    android:padding="16dp">
 
     <TextView
         android:id="@+id/_tvCurrentFile"
@@ -22,6 +23,7 @@
         android:layout_height="wrap_content"
         android:text="PLACEHOLDER"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/_tvCurrentFile" />
 
@@ -35,8 +37,9 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <ProgressBar
-        android:id="@+id/progressBar"
+        android:id="@+id/partialProgressBar"
         style="?android:attr/progressBarStyleHorizontal"
+        android:progressDrawable="@drawable/custom_progress_bg"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toTopOf="@+id/textView6"
@@ -45,8 +48,9 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <ProgressBar
-        android:id="@+id/progressBar2"
+        android:id="@+id/totalProgressBar"
         style="?android:attr/progressBarStyleHorizontal"
+        android:progressDrawable="@drawable/custom_progress_bg"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toTopOf="@+id/btnProcessingCancel"
@@ -60,7 +64,7 @@
         android:layout_height="wrap_content"
         android:text="File progress"
         android:textAlignment="center"
-        app:layout_constraintBottom_toTopOf="@+id/textView9"
+        app:layout_constraintBottom_toTopOf="@+id/_tvCurrentPhase"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent" />
@@ -71,7 +75,7 @@
         android:layout_height="wrap_content"
         android:text="Total progress"
         android:textAlignment="center"
-        app:layout_constraintBottom_toTopOf="@+id/progressBar2"
+        app:layout_constraintBottom_toTopOf="@+id/totalProgressBar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
@@ -94,19 +98,19 @@
         app:layout_constraintTop_toTopOf="@+id/_tvTimePassed" />
 
     <TextView
-        android:id="@+id/textView9"
+        android:id="@+id/_tvCurrentPhase"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Current phase:"
-        app:layout_constraintBottom_toTopOf="@+id/progressBar"
+        app:layout_constraintBottom_toTopOf="@+id/partialProgressBar"
         app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
-        android:id="@+id/textView10"
+        android:id="@+id/tvCurrentPhase"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="PLACEHOLDER"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/textView9"
-        app:layout_constraintTop_toTopOf="@+id/textView9" />
+        app:layout_constraintStart_toEndOf="@+id/_tvCurrentPhase"
+        app:layout_constraintTop_toTopOf="@+id/_tvCurrentPhase" />
 </androidx.constraintlayout.widget.ConstraintLayout>

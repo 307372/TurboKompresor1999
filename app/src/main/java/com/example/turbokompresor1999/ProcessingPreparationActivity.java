@@ -1,5 +1,7 @@
 package com.example.turbokompresor1999;
 
+import static com.example.turbokompresor1999.ArchiveStructureDetailsActivity.getBlockSizeFromFlags;
+
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -10,9 +12,7 @@ import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.Spinner;
 
-import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.BitSet;
 
 public class ProcessingPreparationActivity extends AppCompatActivity {
@@ -25,6 +25,7 @@ public class ProcessingPreparationActivity extends AppCompatActivity {
     Spinner spinnerHashing;
 
     String path;
+    long filesize;
 
 
     @Override
@@ -35,6 +36,7 @@ public class ProcessingPreparationActivity extends AppCompatActivity {
         Bundle extras = getIntent().getExtras();
         path = extras.getString("pathToFile");
         java.io.File file = new java.io.File(path);
+        filesize = file.length();
 
         ActionBar actionBar = getSupportActionBar();
         actionBar.setTitle("Compression");
@@ -59,7 +61,7 @@ public class ProcessingPreparationActivity extends AppCompatActivity {
         spinnerHashing.setSelection(3);
     }
 
-    public short getFlagsFromSelectedOptions() {
+    public BitSet getFlagsFromSelectedOptions() {
         BitSet flags = new BitSet();
         if (cb_bwt.isChecked()) flags.set(File.Flags.BWT);
         if (cb_mtf.isChecked()) flags.set(File.Flags.MTF);
@@ -91,17 +93,50 @@ public class ProcessingPreparationActivity extends AppCompatActivity {
                 break;
         }
 
-        short shortFlags = ByteBuffer.wrap(flags.toByteArray()).getShort();
-
-        return shortFlags;
+        return flags;
     }
+
+    public int getIntFromFlagBitset(BitSet flags) {
+        long longer = flags.toLongArray()[0];
+        int flagsInt = (int) longer;
+        return flagsInt;
+    }
+
+    public long getAmountOfBlocks(BitSet flags) {
+        return Math.round(Math.ceil((double) filesize / (double) getBlockSizeFromFlags(flags)));
+    }
+
+    public long getHowMuchProgressIs100Percent(BitSet flagSet)
+    {
+        int maxProgress = 0;
+
+        if (cb_bwt.isChecked()) ++maxProgress;
+        if (cb_mtf.isChecked()) ++maxProgress;
+        if (cb_rle.isChecked()) ++maxProgress;
+
+        String selectedEntropy = spinnerEntropyCoding.getSelectedItem().toString();
+        if (!"None".equals(selectedEntropy)) ++maxProgress;
+
+        maxProgress *= getAmountOfBlocks(flagSet);
+
+        String selectedHashing = spinnerHashing.getSelectedItem().toString();
+        if (!"None".equals(selectedHashing)) ++maxProgress;
+
+        return maxProgress;
+    }
+
     // TODO: investigate why app crashes when pressing "back arrow" on empty archive
 
     public void doProcessing(View v)
     {
         Intent intent = new Intent(this, ProcessingActivity.class);
+        BitSet flags = getFlagsFromSelectedOptions();
+
         intent.putExtra("pathToFile", path);
-        intent.putExtra("flags", getFlagsFromSelectedOptions());
+        intent.putExtra("flags", getIntFromFlagBitset(flags));
+        intent.putExtra("amountOfBlocks", getAmountOfBlocks(flags));
+        intent.putExtra("partialProgressFor100Percent", getHowMuchProgressIs100Percent(flags));
+
         startActivity(intent);
     }
 }

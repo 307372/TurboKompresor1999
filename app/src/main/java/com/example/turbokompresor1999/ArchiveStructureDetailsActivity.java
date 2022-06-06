@@ -12,9 +12,10 @@ import java.util.BitSet;
 import java.util.Objects;
 
 public class ArchiveStructureDetailsActivity extends AppCompatActivity {
-    File data;
+    File fileData;
     File dataCopy;
     int requestCode;
+
 
     TextView tvFilename;
     TextView tvPath;
@@ -30,18 +31,16 @@ public class ArchiveStructureDetailsActivity extends AppCompatActivity {
         findViewsById();
 
         Bundle extras = getIntent().getExtras();
-        requestCode = extras.getInt("requestCode");
-        if (requestCode == Codes.Request.details) {
-            long id = extras.getLong("lookup_id");
+        long id = extras.getLong("lookup_id");
 
-            data = (File) ArchiveManager.getInstance().getStructureFromCurrentContent(id);
+        fileData = (File) ArchiveManager.getInstance().getStructureFromCurrentContent(id);
 
-            dataCopy = new File();
-            dataCopy.setName(data.name);
-            dataCopy.setLookupId(data.lookup_id);
-            dataCopy.setPath(data.path);
+        dataCopy = new File();
+        dataCopy.setName(fileData.name);
+        dataCopy.setLookupId(fileData.lookup_id);
+        dataCopy.setPath(fileData.path);
 
-        }/*else if (requestCode == Codes.Request.newCrime) {
+        /*else if (requestCode == Codes.Request.newCrime) {
             data = CrimeLab.get(this).appendCrime(new Crime());
             data.setId(UUID.randomUUID());
             data.setDate(new Date(Calendar.getInstance().getTimeInMillis()));
@@ -62,15 +61,15 @@ public class ArchiveStructureDetailsActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         Intent returnIntent = getIntent();
-        returnIntent.putExtra("lookup_id", data.lookup_id);
+        returnIntent.putExtra("lookup_id", fileData.lookup_id);
 
         updateCrime();
 
         if (requestCode == Codes.Request.details) {
 
-            if (Objects.equals(data.name, dataCopy.name) &&
-                Objects.equals(data.lookup_id, dataCopy.lookup_id) &&
-                Objects.equals(data.path, dataCopy.path))
+            if (Objects.equals(fileData.name, dataCopy.name) &&
+                Objects.equals(fileData.lookup_id, dataCopy.lookup_id) &&
+                Objects.equals(fileData.path, dataCopy.path))
             {
                 setResult(Codes.Result.noActionRequired, returnIntent);
             } else {
@@ -83,12 +82,12 @@ public class ArchiveStructureDetailsActivity extends AppCompatActivity {
     }
 
     private void updateViews() {
-        tvFilename.setText("File name: " + data.name);
-        tvPath.setText("Path: " + data.path);
-        tvCompressedSize.setText("Compressed size: " + scaleBytesToBiggerUnit(data.compressed_size));
-        tvOriginalSize.setText("Original size: " + scaleBytesToBiggerUnit(data.original_size));
-        tvCompressionRatio.setText("Compression ratio: " + (float) data.compressed_size / data.original_size * 100 + "% (lower is better)");
-        tvAppliedAlgorithms.setText(getPipelineStringFromFlags(data.flags));
+        tvFilename.setText("File name: " + fileData.name);
+        tvPath.setText("Path: " + fileData.path);
+        tvCompressedSize.setText("Compressed size: " + scaleBytesToBiggerUnit(fileData.compressed_size));
+        tvOriginalSize.setText("Original size: " + scaleBytesToBiggerUnit(fileData.original_size));
+        tvCompressionRatio.setText("Compression ratio: " + (float) fileData.compressed_size / fileData.original_size * 100 + "% (lower is better)");
+        tvAppliedAlgorithms.setText(getPipelineStringFromFlags(fileData.flags));
     }
 
     private String getPipelineStringFromFlags(BitSet flags)
@@ -184,5 +183,21 @@ public class ArchiveStructureDetailsActivity extends AppCompatActivity {
             setResult(Codes.Result.crimeDeletion, returnIntent);
         }
         finish();*/
+    }
+
+    public void onExtract(View v) {
+        Intent intent = new Intent();
+        intent.putExtra("lookup_id", fileData.lookup_id);
+
+        setResult(Codes.Result.requestExtraction, intent);
+        finish();
+    }
+
+    public void onDelete(View v) {
+        Intent intent = new Intent();
+        intent.putExtra("lookup_id", fileData.lookup_id);
+
+        setResult(Codes.Result.requestDeletion, intent);
+        finish();
     }
 }

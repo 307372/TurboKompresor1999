@@ -27,7 +27,6 @@ public class ProcessingPreparationActivity extends AppCompatActivity {
 
     String path;
     long filesize;
-    int requestCode;
     boolean success = false;
 
     @Override
@@ -46,7 +45,6 @@ public class ProcessingPreparationActivity extends AppCompatActivity {
         setContentView(R.layout.activity_processing_settings);
 
         Bundle extras = getIntent().getExtras();
-        requestCode = extras.getInt("requestCode");
 
         path = extras.getString("pathToFile");
         java.io.File file = new java.io.File(path);
@@ -123,40 +121,43 @@ public class ProcessingPreparationActivity extends AppCompatActivity {
         return flagsInt;
     }
 
-    public long getAmountOfBlocks(BitSet flags) {
-        return Math.round(Math.ceil((double) filesize / (double) getBlockSizeFromFlags(flags)));
+    public static long getAmountOfBlocks(BitSet flags, long fileSize) {
+        return Math.round(Math.ceil((double) fileSize / (double) getBlockSizeFromFlags(flags)));
     }
 
-    public long getHowMuchProgressIs100Percent(BitSet flagSet)
+    public static long getHowMuchProgressIs100Percent(BitSet flagSet, long fileSize)
     {
         int maxProgress = 0;
 
-        if (cb_bwt.isChecked()) ++maxProgress;
-        if (cb_mtf.isChecked()) ++maxProgress;
-        if (cb_rle.isChecked()) ++maxProgress;
+        if (flagSet.get(File.Flags.BWT)) ++maxProgress;
+        if (flagSet.get(File.Flags.MTF)) ++maxProgress;
+        if (flagSet.get(File.Flags.RLE)) ++maxProgress;
 
-        String selectedEntropy = spinnerEntropyCoding.getSelectedItem().toString();
-        if (!"None".equals(selectedEntropy)) ++maxProgress;
+        if (flagSet.get(File.Flags.AC_order0)) ++maxProgress;
+        if (flagSet.get(File.Flags.AC_order1)) ++maxProgress;
+        if (flagSet.get(File.Flags.rANS)) ++maxProgress;
 
-        maxProgress *= getAmountOfBlocks(flagSet);
+        maxProgress *= getAmountOfBlocks(flagSet, fileSize);
 
-        String selectedHashing = spinnerHashing.getSelectedItem().toString();
-        if (!"None".equals(selectedHashing)) ++maxProgress;
+        if (flagSet.get(File.Flags.CRC32)) ++maxProgress;
+        if (flagSet.get(File.Flags.SHA_1)) ++maxProgress;
+        if (flagSet.get(File.Flags.SHA_256)) ++maxProgress;
 
         return maxProgress;
     }
 
     // TODO: investigate why app crashes when pressing "back arrow" on empty archive
 
-    public void doProcessing(View v)
+    public void startCompression(View v)
     {
         Intent intent = new Intent(this, ProcessingActivity.class);
         BitSet flags = getFlagsFromSelectedOptions();
 
         intent.putExtra("pathToFile", path);
         intent.putExtra("flags", getIntFromFlagBitset(flags));
-        intent.putExtra("amountOfBlocks", getAmountOfBlocks(flags));
-        intent.putExtra("partialProgressFor100Percent", getHowMuchProgressIs100Percent(flags));
+        intent.putExtra("amountOfBlocks", getAmountOfBlocks(flags, filesize));
+        intent.putExtra("partialProgressFor100Percent", getHowMuchProgressIs100Percent(flags, filesize));
+        intent.putExtra("requestCode", Codes.Request.addFile);
 
         startActivityForResult(intent, Codes.Request.addFile);
     }

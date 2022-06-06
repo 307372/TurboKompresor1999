@@ -22,12 +22,22 @@ class Codes {
     static class Request {
         static final int addFile = 9999;
         static final int details = 1234;
-        static final int newCrime = 4321;
+        static final int extractFile = 1235;
+
         static final int FILE_PICKER_REQUEST_CODE = 1337;
+        static final int PLACE_PICKER_REQUEST_CODE = 7331;
+        static final int newCrime = 4321;
     }
     static class Result {
+        static final int extractedSuccessfuly = 995;
+        static final int failedToExtract = 996;
+
         static final int fileAdded = 997;
         static final int failedToAdd = 998;
+
+        static final int requestExtraction = 1111;
+        static final int requestDeletion = 1112;
+
         static final int noActionRequired = 999;
         static final int crimeAdded = 1000;
         static final int crimeDeletion = 1001;
@@ -40,8 +50,6 @@ public class ArchiveViewActivity extends AppCompatActivity {
     static {
         System.loadLibrary("jnitest");
     }
-
-
 
     RecyclerView recyclerView;
     ArchiveManager manager;
@@ -58,7 +66,7 @@ public class ArchiveViewActivity extends AppCompatActivity {
                 if (resultCode == RESULT_OK)
                 {
                     String filePath = data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH);
-                    startFileProcessingPreparationActivity(filePath);
+                    startFileAdditionActivity(filePath);
                 }
                 break;
 
@@ -67,6 +75,44 @@ public class ArchiveViewActivity extends AppCompatActivity {
                 {
                     manager.pullArchiveAndUpdate();
                     archiveAdapter.notifyDataSetChanged(); //TODO: optimise this if needed
+                }
+                break;
+            case Codes.Request.details:
+                if (resultCode == Codes.Result.requestExtraction) {
+                    manager.addIdForNextExtraction(data.getLongExtra("lookup_id", 0));
+
+                    picker = new MaterialFilePicker();
+                    picker
+                            .withCustomActivity(PlacePickerActivity.class)
+                            .withActivity(this)
+                            .withCloseMenu(true)
+                            .withRootPath("/storage")
+                            .withPath("/storage")//String.valueOf(FileSystems.getDefault().getPath("/")))
+                            .withHiddenFiles(true)
+                            .withTitle("Select folder")
+                            .withRequestCode(Codes.Request.PLACE_PICKER_REQUEST_CODE)
+                            .start();
+                    /*
+                    Intent intent = new Intent(ArchiveViewActivity.this, PlacePickerActivity.class);
+                    intent.putExtra("lookup_id", data.getIntExtra("lookup_id", -1));
+
+                    startActivityForResult(intent, Codes.Request.extractFile);
+                    */
+                }
+                else if (resultCode == Codes.Result.requestDeletion)
+                {
+
+                }
+
+                break;
+
+            case Codes.Request.PLACE_PICKER_REQUEST_CODE:
+                if (resultCode == RESULT_OK)
+                {
+                    String folderPath = data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH);
+                    long id = manager.popIdForNextExtraction();
+
+                    startFileExtractionActivity(folderPath, id);
                 }
                 break;
         }
@@ -155,7 +201,7 @@ public class ArchiveViewActivity extends AppCompatActivity {
         }
     }
 
-    public void launchFilePicker(View v) {
+    public void launchFilePicker(View v) {/*
         picker = new MaterialFilePicker();
         picker.withActivity(this)
                 .withCloseMenu(true)
@@ -164,7 +210,7 @@ public class ArchiveViewActivity extends AppCompatActivity {
                 .withHiddenFiles(true)
                 .withTitle("Select a file to add it")
                 .withRequestCode(Codes.Request.FILE_PICKER_REQUEST_CODE)
-                .start();
+                .start();*/
     }
 
 
@@ -177,11 +223,20 @@ public class ArchiveViewActivity extends AppCompatActivity {
         startActivityForResult(detailsActivityIntent, Codes.Request.details);
     }
 
-    public void startFileProcessingPreparationActivity(String pathToFile) {
+    public void startFileAdditionActivity(String pathToFile) {
         Intent intent = new Intent(ArchiveViewActivity.this, ProcessingPreparationActivity.class);
         intent.putExtra("pathToFile", pathToFile);
 
         startActivityForResult(intent, Codes.Request.addFile);
+    }
+
+    public void startFileExtractionActivity(String outputFolderPath, long lookup_id) {
+        Intent intent = new Intent(ArchiveViewActivity.this, ProcessingActivity.class);
+        intent.putExtra("outputFolderPath", outputFolderPath);
+        intent.putExtra("lookup_id", lookup_id);
+        intent.putExtra("requestCode", Codes.Request.extractFile);
+
+        startActivityForResult(intent, Codes.Request.extractFile);
     }
 
     private native String stringFromJNI();

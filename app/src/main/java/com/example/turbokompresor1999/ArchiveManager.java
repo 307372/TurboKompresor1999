@@ -7,6 +7,7 @@ public class ArchiveManager {
     private static ArchiveManager instance;
     Archive archive;
     ArrayList<WeakReference<ArchiveStructure>> contentOfCurrentFolder;
+    ArrayList<Long> lookupIdsForNextExtraction;
     WeakReference<Folder> currentFolder;
 
     private ArchiveManager() {
@@ -60,9 +61,19 @@ public class ArchiveManager {
     public void pullArchiveAndUpdate() {
         archive = new Archive();
         contentOfCurrentFolder = new ArrayList<>();
+        lookupIdsForNextExtraction = new ArrayList<>();
         archive.pullAllFromArchive();
         currentFolder = new WeakReference<>(archive.root_folder);
         updateContentOfCurrentFolder();
+    }
+
+    public void addIdForNextExtraction(long lookupId) {
+        if (lookupId == 0) throw new RuntimeException("Lookup_id = 0! wtf");
+        lookupIdsForNextExtraction.add(lookupId);
+    }
+
+    public long popIdForNextExtraction() {
+        return lookupIdsForNextExtraction.remove(lookupIdsForNextExtraction.size()-1);
     }
 
     public void changeCurrentFolder(Folder folder){

@@ -1,5 +1,7 @@
 package com.example.turbokompresor1999;
 
+import static com.example.turbokompresor1999.ProcessingPreparationActivity.getHowMuchProgressIs100Percent;
+
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
@@ -18,7 +20,7 @@ public class ProcessingActivity extends AppCompatActivity {
     int flags;
     long parent_lookup_id;
     long amountOfBlocks;
-    ProcessingThread worker;
+    Thread worker;
     ProgressPollingThread poller;
     boolean success = false;
     boolean processingDone = false;
@@ -31,6 +33,8 @@ public class ProcessingActivity extends AppCompatActivity {
     Handler mainThreadHandler;
     Date startDate;
 
+    File fileToExtract;
+    int requestCode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,14 +43,23 @@ public class ProcessingActivity extends AppCompatActivity {
         findViewsById();
 
         Bundle extras = getIntent().getExtras();
+        requestCode = extras.getInt("requestCode");
 
-        path = extras.getString("pathToFile");
+        if (requestCode == Codes.Request.addFile) {
+            path = extras.getString("pathToFile");
+            amountOfBlocks = extras.getLong("amountOfBlocks");
+            flags = extras.getInt("flags");
+            maxPartialProgress = extras.getLong("partialProgressFor100Percent");
+            parent_lookup_id = ArchiveManager.getInstance().currentFolder.get().lookup_id;
+        } else if (requestCode == Codes.Request.extractFile) {
+            path = extras.getString("outputFolderPath");
+            fileToExtract = (File) ArchiveManager.getInstance()
+                    .getStructureFromCurrentContent(extras.getLong("lookup_id"));
+            maxPartialProgress = getHowMuchProgressIs100Percent(fileToExtract.flags, fileToExtract.original_size);
+        }
+
         tvCurrentFileName.setText(new java.io.File(path).getName());
 
-        flags = extras.getInt("flags");
-        amountOfBlocks = extras.getLong("amountOfBlocks");
-        maxPartialProgress = extras.getLong("partialProgressFor100Percent");
-        parent_lookup_id = ArchiveManager.getInstance().currentFolder.get().lookup_id;
 
         //TODO: make it so that multiple files can be processed in a row
         partialProgressBar.setMax((int) maxPartialProgress);
@@ -55,8 +68,14 @@ public class ProcessingActivity extends AppCompatActivity {
         mainThreadHandler = new Handler();
         startDate = Calendar.getInstance().getTime();
 
-        worker = new ProcessingThread(path, parent_lookup_id, flags);
-        worker.start();
+        if (requestCode == Codes.Request.addFile) {
+            worker = new CompressionThread(path, parent_lookup_id, flags);
+            worker.start();
+        } else if (requestCode == Codes.Request.extractFile)
+        {
+            worker = new DecompressionThread(path, fileToExtract.lookup_id);
+            worker.start();
+        }
 
         poller = new ProgressPollingThread();
         poller.start();
@@ -78,19 +97,24 @@ public class ProcessingActivity extends AppCompatActivity {
     }
 
     public void setResult() {
-        if (success) setResult(Codes.Result.fileAdded);
-        else setResult(Codes.Result.failedToAdd);
+        if (requestCode == Codes.Request.addFile) {
+            if (success) setResult(Codes.Result.fileAdded);
+            else setResult(Codes.Result.failedToAdd);
+        } else if (requestCode == Codes.Request.extractFile) {
+            if (success) setResult(Codes.Result.extractedSuccessfuly);
+            else setResult(Codes.Result.failedToExtract);
+        }
     }
 
     private native int getProcessingProgress();
 
-    class ProcessingThread extends Thread {
+    class CompressionThread extends Thread {
 
         String path;
         int flags;
         long parent_lookup_id;
 
-        ProcessingThread(String pathToFile, long parent_lookup_id, int flags) {
+        CompressionThread(String pathToFile, long parent_lookup_id, int flags) {
             this.path = pathToFile;
             this.flags = flags;
             this.parent_lookup_id = parent_lookup_id;
@@ -107,6 +131,28 @@ public class ProcessingActivity extends AppCompatActivity {
         }
 
         private native boolean compressFile(String pathToFile, long parent_lookup_id, int flags);
+    }
+
+    class DecompressionThread extends Thread {
+        String outputFolderPath;
+        long lookup_id;
+
+        DecompressionThread(String outputFolderPath, long lookup_id) {
+            this.outputFolderPath = outputFolderPath;
+            this.lookup_id = lookup_id;
+        }
+
+        @Override
+        public void run() {
+            processingDone = false;
+            success = false;
+
+            success = decompressStructure(outputFolderPath, lookup_id);
+            processingDone = true;
+            mainThreadHandler.post(ProcessingActivity.this::setResult);
+        }
+
+        private native boolean decompressStructure(String outputPath, long lookup_id);
     }
 
     public void updateTimer() {

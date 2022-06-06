@@ -25,6 +25,10 @@
             android:name=".ArchiveStructureDetailsActivity"
             android:exported="false"/>
         <activity
+            android:name=".PlacePickerActivity"
+            android:theme="@style/MFP_BaseTheme"
+            android:exported="false"/>
+        <activity
             android:name=".ArchiveViewActivity"
             android:exported="true">
             <intent-filter>

@@ -33,7 +33,7 @@ public class ProcessingActivity extends AppCompatActivity {
     Handler mainThreadHandler;
     Date startDate;
 
-    File fileToExtract;
+    File fileToProcess;
     int requestCode;
 
     @Override
@@ -51,15 +51,19 @@ public class ProcessingActivity extends AppCompatActivity {
             flags = extras.getInt("flags");
             maxPartialProgress = extras.getLong("partialProgressFor100Percent");
             parent_lookup_id = ArchiveManager.getInstance().currentFolder.get().lookup_id;
+            tvCurrentFileName.setText(new java.io.File(path).getName());
         } else if (requestCode == Codes.Request.extractFile) {
             path = extras.getString("outputFolderPath");
-            fileToExtract = (File) ArchiveManager.getInstance()
+            fileToProcess = (File) ArchiveManager.getInstance()
                     .getStructureFromCurrentContent(extras.getLong("lookup_id"));
-            maxPartialProgress = getHowMuchProgressIs100Percent(fileToExtract.flags, fileToExtract.original_size);
+            maxPartialProgress = getHowMuchProgressIs100Percent(fileToProcess.flags, fileToProcess.original_size);
+            tvCurrentFileName.setText(new java.io.File(path).getName());
+        } else if (requestCode == Codes.Request.deleteFile) {
+            fileToProcess = (File) ArchiveManager.getInstance()
+                    .getStructureFromCurrentContent(extras.getLong("lookup_id"));
+            maxPartialProgress = 1;
+            tvCurrentFileName.setText(fileToProcess.name);
         }
-
-        tvCurrentFileName.setText(new java.io.File(path).getName());
-
 
         //TODO: make it so that multiple files can be processed in a row
         partialProgressBar.setMax((int) maxPartialProgress);
@@ -73,7 +77,10 @@ public class ProcessingActivity extends AppCompatActivity {
             worker.start();
         } else if (requestCode == Codes.Request.extractFile)
         {
-            worker = new DecompressionThread(path, fileToExtract.lookup_id);
+            worker = new DecompressionThread(path, fileToProcess.lookup_id);
+            worker.start();
+        } else if (requestCode == Codes.Request.deleteFile) {
+            worker = new DeletionThread(path, fileToProcess.lookup_id);
             worker.start();
         }
 
@@ -101,8 +108,15 @@ public class ProcessingActivity extends AppCompatActivity {
             if (success) setResult(Codes.Result.fileAdded);
             else setResult(Codes.Result.failedToAdd);
         } else if (requestCode == Codes.Request.extractFile) {
-            if (success) setResult(Codes.Result.extractedSuccessfuly);
+            if (success) setResult(Codes.Result.extractedSuccessfully);
             else setResult(Codes.Result.failedToExtract);
+        }else if (requestCode == Codes.Request.deleteFile) {
+            if (success) {
+                setResult(Codes.Result.deletedSuccessfully);
+            }
+            else {
+                setResult(Codes.Result.failedToDelete);
+            }
         }
     }
 
@@ -153,6 +167,28 @@ public class ProcessingActivity extends AppCompatActivity {
         }
 
         private native boolean decompressStructure(String outputPath, long lookup_id);
+    }
+
+    class DeletionThread extends Thread {
+        String outputFolderPath;
+        long lookup_id;
+
+        DeletionThread(String outputFolderPath, long lookup_id) {
+            this.outputFolderPath = outputFolderPath;
+            this.lookup_id = lookup_id;
+        }
+
+        @Override
+        public void run() {
+            processingDone = false;
+            success = false;
+
+            success = deleteStructure(lookup_id);
+            processingDone = true;
+            mainThreadHandler.post(ProcessingActivity.this::setResult);
+        }
+
+        private native boolean deleteStructure(long lookup_id);
     }
 
     public void updateTimer() {

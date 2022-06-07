@@ -23,13 +23,18 @@ class Codes {
         static final int addFile = 9999;
         static final int details = 1234;
         static final int extractFile = 1235;
+        static final int deleteFile = 1236;
 
-        static final int FILE_PICKER_REQUEST_CODE = 1337;
-        static final int PLACE_PICKER_REQUEST_CODE = 7331;
+        static final int pickFileToAdd = 1337;
+        static final int pickFolderForExtaction = 7331;
+
         static final int newCrime = 4321;
     }
     static class Result {
-        static final int extractedSuccessfuly = 995;
+        static final int failedToDelete = 993;
+        static final int deletedSuccessfully = 994;
+
+        static final int extractedSuccessfully = 995;
         static final int failedToExtract = 996;
 
         static final int fileAdded = 997;
@@ -62,7 +67,7 @@ public class ArchiveViewActivity extends AppCompatActivity {
 
         switch (requestCode)
         {
-            case Codes.Request.FILE_PICKER_REQUEST_CODE:
+            case Codes.Request.pickFileToAdd:
                 if (resultCode == RESULT_OK)
                 {
                     String filePath = data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH);
@@ -77,6 +82,14 @@ public class ArchiveViewActivity extends AppCompatActivity {
                     archiveAdapter.notifyDataSetChanged(); //TODO: optimise this if needed
                 }
                 break;
+
+            case Codes.Request.deleteFile:
+                if (resultCode == Codes.Result.deletedSuccessfully)
+                {
+                    manager.pullArchiveAndUpdate();
+                    archiveAdapter.notifyDataSetChanged(); //TODO: optimise this if needed
+                }
+
             case Codes.Request.details:
                 if (resultCode == Codes.Result.requestExtraction) {
                     manager.addIdForNextExtraction(data.getLongExtra("lookup_id", 0));
@@ -90,7 +103,7 @@ public class ArchiveViewActivity extends AppCompatActivity {
                             .withPath("/storage")//String.valueOf(FileSystems.getDefault().getPath("/")))
                             .withHiddenFiles(true)
                             .withTitle("Select folder")
-                            .withRequestCode(Codes.Request.PLACE_PICKER_REQUEST_CODE)
+                            .withRequestCode(Codes.Request.pickFolderForExtaction)
                             .start();
                     /*
                     Intent intent = new Intent(ArchiveViewActivity.this, PlacePickerActivity.class);
@@ -101,14 +114,13 @@ public class ArchiveViewActivity extends AppCompatActivity {
                 }
                 else if (resultCode == Codes.Result.requestDeletion)
                 {
-
+                    startFileDeletionActivity(data.getLongExtra("lookup_id", 0));
                 }
 
                 break;
 
-            case Codes.Request.PLACE_PICKER_REQUEST_CODE:
-                if (resultCode == RESULT_OK)
-                {
+            case Codes.Request.pickFolderForExtaction:
+                if (resultCode == RESULT_OK) {
                     String folderPath = data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH);
                     long id = manager.popIdForNextExtraction();
 
@@ -237,6 +249,14 @@ public class ArchiveViewActivity extends AppCompatActivity {
         intent.putExtra("requestCode", Codes.Request.extractFile);
 
         startActivityForResult(intent, Codes.Request.extractFile);
+    }
+
+    public void startFileDeletionActivity(long lookup_id) {
+        Intent intent = new Intent(ArchiveViewActivity.this, ProcessingActivity.class);
+        intent.putExtra("lookup_id", lookup_id);
+        intent.putExtra("requestCode", Codes.Request.deleteFile);
+
+        startActivityForResult(intent, Codes.Request.deleteFile);
     }
 
     private native String stringFromJNI();

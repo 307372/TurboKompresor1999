@@ -68,7 +68,7 @@ public class ArchiveManager {
     }
 
     public void addIdForNextExtraction(long lookupId) {
-        if (lookupId == 0) throw new RuntimeException("Lookup_id = 0! wtf");
+        if (lookupId == 0) throw new RuntimeException("Lookup_id = 0! That can't be right");
         lookupIdsForNextExtraction.add(lookupId);
     }
 
